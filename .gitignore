@@ -1,0 +1,16 @@
+__pycache__
+aimmy
+cs_cheat_python_dataset.v1i.yolov8
+cs_cheat_python_dataset.v1i.yolov9
+cs2_player_detection_200px.v1i.yolov8
+test
+training_images
+best_100.pt
+best.onnx   
+detection_view.py
+detection_view2.py
+mouse_test.py
+mouseController.py
+*.png
+test.py
+test2.py
