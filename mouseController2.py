@@ -9,6 +9,7 @@ MOVE_MOUSE = 0x0001
 # Set initial direction
 direction = np.array([0, 0])  # x, y
 
+snapturn = False
 # Variables to control speed and frequency
 freq_min = 0.001
 freq_i_min = 0.01
@@ -68,27 +69,33 @@ def move_mouse_loop4():
             x_i = direction[0]
             y_i = direction[1]
         if not np.array_equal(direction, np.array([0, 0])):
-            
-            update_frequency, dist = dynamic_time_interval(x_r, y_r)
-            
-            if dist > 14:
-                incr_i = incr
-            elif dist > 6:
-                incr_i = min(2, incr)
-            else:
-                incr_i = 1
-
-            x = -1*incr_i if x_r < -1 else incr_i if x_r > 1 else 0
-            y = -1*incr_i if y_r < -1 else incr_i if y_r > 1 else 0
-
-
-            # print(f"dist {dist}, incr_i {incr_i}")
-            x_r -= x
-            y_r -= y
-            if dist > 1.5:
+            if snapturn:
+                x, y = x_r/2, y_r/2
                 move_mouse(x, y)
+                x_r -= x
+                y_r -= y
+                time.sleep(update_frequency)
+            else:
+                update_frequency, dist = dynamic_time_interval(x_r, y_r)
+                
+                if dist > 14:
+                    incr_i = incr
+                elif dist > 6:
+                    incr_i = min(2, incr)
+                else:
+                    incr_i = 1
 
-            time.sleep(update_frequency)
+                x = -1*incr_i if x_r < -1 else incr_i if x_r > 1 else 0
+                y = -1*incr_i if y_r < -1 else incr_i if y_r > 1 else 0
+
+
+                # print(f"dist {dist}, incr_i {incr_i}")
+                x_r -= x
+                y_r -= y
+                if dist > 1.5:
+                    move_mouse(x, y)
+
+                time.sleep(update_frequency)
         else:
             time.sleep(init_freq)
             

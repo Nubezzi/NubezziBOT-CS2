@@ -7,12 +7,18 @@ import mouseController2 as mc
 import math
 import threading
 import time
+import torch
+
+torch.cuda.set_device(0)
+
+
 
 fov_elements = []
 
 conf_limit = 0.75
 team_ident = ""
 isFFA = True
+showVision = False
 
 def get_center_region(width, height, fov_size):
     center_x, center_y = width // 2, height // 2
@@ -39,6 +45,7 @@ def detect_and_display(model, image, scale_factor):
     results = model.predict(source=image, verbose=False)
     # Resize image and boxes
     resized_image, scaled_boxes = resize_image_and_boxes(image, results[0].boxes, scale_factor)
+    #resized_image, scaled_boxes = image, results[0].boxes
     detections = []
 
     # Draw results on the resized image
@@ -51,9 +58,11 @@ def detect_and_display(model, image, scale_factor):
                 conf, cls_id = detection.boxes.conf[i], detection.boxes.cls[i]
                 class_name = detection.names[int(cls_id)]
                 detections.append({"x": cp_x, "y": cp_Y, "class_name": class_name, "conf": conf})
-                cv2.rectangle(resized_image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
-                cv2.putText(resized_image, f'{class_name} {conf:.2f}', (int(x1), int(y1 - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
-    cv2.imshow('YOLOv8 Detection', resized_image)
+                if showVision:
+                    cv2.rectangle(resized_image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+                    cv2.putText(resized_image, f'{class_name} {conf:.2f}', (int(x1), int(y1 - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
+    if showVision: 
+        cv2.imshow('YOLOv8 Detection', resized_image)
     return detections
 
 def calc_dist(x,y):
@@ -101,7 +110,7 @@ def bot_loop():
         time.sleep(0.001)
 
 
-def main():
+def main2():
     global fov_elements, fov_size
     
     # Load the trained YOLO model
@@ -112,7 +121,7 @@ def main():
     width, height = monitor.width, monitor.height
 
     # Define the size of the FOV region (in pixels)
-    fov_size = 200  # Adjust this based on your requirement
+    fov_size = 400  # Adjust this based on your requirement
 
     # Scale factor for resizing image
     scale_factor = 1  # 100x100 to 400x400
@@ -123,6 +132,78 @@ def main():
     while True:
         screen = capture_screen(region)
         fov_elements = detect_and_display(model, screen, scale_factor)
+        # Break the loop if 'h' is pressed
+        if cv2.waitKey(1) == ord('h'):
+            break
+
+    cv2.destroyAllWindows()
+    
+def main3():
+    global fov_elements, fov_size
+    
+    # Load the trained YOLO model
+    
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    
+
+    model = YOLO('best.pt').to(device)
+
+    # Define the size of the FOV region (in pixels)
+    fov_size = 200  # Adjust this based on your requirement
+
+    # Scale factor for resizing image
+    scale_factor = 1  # Adjust scaling if needed
+    print(f'Using device: {device}')
+    while True:
+        # Dynamically get the current screen resolution
+        monitor = get_monitors()[0]
+        width, height = monitor.width, monitor.height
+
+        # Calculate the center region based on current resolution
+        region = get_center_region(width, height, fov_size)
+
+        # Capture screen
+        screen = capture_screen(region)
+
+        # Detect and display
+        fov_elements = detect_and_display(model, screen, scale_factor)
+
+        # Break the loop if 'h' is pressed
+        if cv2.waitKey(1) == ord('h'):
+            break
+
+    cv2.destroyAllWindows()
+    
+def main():
+    global fov_elements, fov_size
+    
+    # Load the trained YOLO model
+    
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    
+
+    model = YOLO('best.pt').to(device)
+
+    # Define the size of the FOV region (in pixels)
+    fov_size = 200  # Adjust this based on your requirement
+
+    # Scale factor for resizing image
+    scale_factor = 1  # Adjust scaling if needed
+    print(f'Using device: {device}')
+
+    # Dynamically get the current screen resolution
+    monitor = get_monitors()[0]
+    width, height = monitor.width, monitor.height
+
+    # Calculate the center region based on current resolution
+    region = get_center_region(width, height, fov_size)
+    while True:
+        # Capture screen
+        screen = capture_screen(region)
+
+        # Detect and display
+        fov_elements = detect_and_display(model, screen, scale_factor)
+
         # Break the loop if 'h' is pressed
         if cv2.waitKey(1) == ord('h'):
             break
